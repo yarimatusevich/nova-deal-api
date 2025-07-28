@@ -1,16 +1,16 @@
-from nova_act_service import request_nova
-from flask import Flask, jsonify
-from flask_cors import CORS
-from urllib.parse import unquote
+from nova_service import initialize_service, query_nova
+from models import DealList
+from fastapi import FastAPI
+app = FastAPI()
 
-app = Flask(__name__)
-CORS(app)
-@app.route("/product/<product_name>", methods = ["Get"])
-def search_deals(product_name: str):
-    unquote(product_name) # decoding percent-encoded characters in url string
-    deal_list = request_nova(product_name)
+"""
+Initializes Nova Act api and creates a prompt for it to retrieve the top 5 deals for the user input
+FastAPI automatically converts the DealList Pydantic model into JSON format
+"""
+@app.get("/{product_name}", response_model=DealList | None)
+def search_deals(product_name: str) -> DealList | None:
+    initialize_service()
 
-    return jsonify(deals = deal_list.model_dump())
+    deals = query_nova(query=product_name)
 
-if __name__ == "__main__":
-    app.run(port = 8080)
+    return deals
